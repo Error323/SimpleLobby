@@ -1,141 +1,155 @@
 package com.spring.tasclient.simplelobby;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
 
-import com.javadocking.DockingManager;
-import com.javadocking.dock.Position;
-import com.javadocking.dock.SplitDock;
-import com.javadocking.dock.TabDock;
-import com.javadocking.dockable.DefaultDockable;
-import com.javadocking.dockable.Dockable;
-import com.javadocking.dockable.DockingMode;
-import com.javadocking.dockable.DraggableContent;
-import com.javadocking.drag.DragListener;
-import com.javadocking.model.FloatDockModel;
-import com.spring.tasclient.simplelobby.ui.Menu;
+import com.spring.tasclient.simplelobby.ui.ChatWindow;
+import com.spring.tasclient.simplelobby.ui.ConnectWindow;
+import com.spring.tasclient.simplelobby.ui.MainWindow;
+import com.spring.tasclient.simplelobby.ui.MenuBar;
 
 
-@SuppressWarnings("serial")
-public class SimpleLobby extends JPanel {
+public class SimpleLobby implements ActionListener, IConnectionListener {
 	public static final String NAME    = "SimpleLobby";
 	public static final String VERSION = "1.0.0";
 
-	private TabDock mTabDock;
-	private Position mPos;
+	private static JFrame mPopup;
+	private static JFrame mRoot;
+	private static ConnectWindow mConnectWin;
+	private static ChatWindow mChatWin;
 	
-	public SimpleLobby(JFrame main) {
-		super(new BorderLayout());
-		
-		FloatDockModel dockModel = new FloatDockModel();
-		dockModel.addOwner(main.getName(), main);
+	private TASConnection mConn;
 
-		// Give the dock model to the docking manager.
-		DockingManager.setDockModel(dockModel);
-		
-		mTabDock = new TabDock();
-		SplitDock splitDock = new SplitDock();
-		
-		// Create the content components.
-		TextPanel textPanel1 = new TextPanel("I am window 1.");
-		TextPanel textPanel2 = new TextPanel("I am window 2.");
-		TextPanel textPanel3 = new TextPanel("I am window 3.");
-		TextPanel textPanel4 = new TextPanel("I am window 4.");
-		TextPanel textPanel5 = new TextPanel("I am window 5.");
-		
-		// Create the dockables around the content components.
-		Dockable dockable1 = new DefaultDockable("Window1", textPanel1, "Window 1", null, DockingMode.ALL);
-		Dockable dockable2 = new DefaultDockable("Window2", textPanel2, "Window 2", null, DockingMode.ALL);
-		Dockable dockable3 = new DefaultDockable("Window3", textPanel3, "Window 3", null, DockingMode.ALL);
-		Dockable dockable4 = new DefaultDockable("Window4", textPanel4, "Window 4", null, DockingMode.ALL);
-		Dockable dockable5 = new DefaultDockable("Window5", textPanel5, "Window 5", null, DockingMode.ALL);
-		
-		mPos = new Position(0);
-		mTabDock.addDockable(dockable1, mPos);
-		mTabDock.addDockable(dockable2, mPos);
-		mTabDock.addDockable(dockable3, mPos);
-		mTabDock.addDockable(dockable4, mPos);
-		mTabDock.addDockable(dockable5, mPos);
-		
-		dockModel.addRootDock("tabs", splitDock, main);
-		splitDock.addChildDock(mTabDock, mPos);
-		
-		add(splitDock, BorderLayout.CENTER);
+	public SimpleLobby() {
+		mConn = new TASConnection();
+		mConn.AttachConnectionInterface(this);
 	}
 	
-	/**
-	 * This is the class for the content.
-	 */
-	private class TextPanel extends JPanel implements DraggableContent
-	{
-		
-		private JLabel label; 
-		
-		public TextPanel(String text)
-		{
-			super(new FlowLayout());
-			
-			// The panel.
-			setMinimumSize(new Dimension(80,80));
-			setPreferredSize(new Dimension(150,150));
-			setBackground(Color.white);
-			setBorder(BorderFactory.createLineBorder(Color.lightGray));
-			
-			// The label.
-			label = new JLabel(text);
-			label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-			add(label);
-		}
-		
-		// Implementations of DraggableContent.
-
-		public void addDragListener(DragListener dragListener)
-		{
-			addMouseListener(dragListener);
-			addMouseMotionListener(dragListener);
-			label.addMouseListener(dragListener);
-			label.addMouseMotionListener(dragListener);
-		}
-	}
-
-	private static void createAndShowGUI() {
-        try {
-//        	UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
+	private static void createAndShowGUI(SimpleLobby sl) {
+        mRoot = new JFrame(NAME + " v" + VERSION);
+        mRoot.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        JFrame main = new JFrame(NAME + " v" + VERSION);
-        main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        Menu menu = new Menu();
-        main.setJMenuBar(menu);
+        MenuBar menu = new MenuBar(sl);
+        mRoot.setJMenuBar(menu);
         
         //Instantiate the controlling class.
-        SimpleLobby simplelobby = new SimpleLobby(main);
-        main.getContentPane().add(simplelobby);
+        MainWindow main = new MainWindow(mRoot);
+        mRoot.getContentPane().add(main);
         
         //Display the window.
-        main.pack();
-        main.setVisible(true);
-		main.setLocation(100, 100);
-        main.setSize(1024, 768);
+        mRoot.setVisible(true);
+        mRoot.setSize(1024, 768);
+		mRoot.setLocation(100, 100);
+        
+        //Popup window
+		mPopup = new JFrame();
+		mPopup.setVisible(false);
+		
+		mConnectWin = new ConnectWindow(sl);
+		mChatWin = new ChatWindow(sl);
+		sl.mConn.AttachChatInterface(mChatWin);
+		
+		main.AddDockable("Chat", mChatWin);
 	}
 	
 	public static void main(String[] args) {
+		final SimpleLobby sl = new SimpleLobby();
+		
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                createAndShowGUI();
+            	// ActionListener must be registered in EDT
+                createAndShowGUI(sl);
             }
         });
+	}
+	
+	private void ActivatePopup(JComponent c) {
+		mPopup.add(c);
+		mPopup.setLocation(mRoot.getLocation().x+mRoot.getSize().width/2-c.getWidth()/2,
+				mRoot.getLocation().y+mRoot.getSize().height/2-c.getHeight()/2);
+		mPopup.setSize(c.getSize());
+		mPopup.setVisible(true);		
+	}
+
+	public void actionPerformed(ActionEvent e) {
+		System.out.println(e);
+		if (e.getActionCommand().equals("Connect")) {
+			ActivatePopup(mConnectWin);
+		} else
+		if (e.getActionCommand().equals("Serverconnect")) {
+			String server = mConnectWin.GetServer();
+			int port = mConnectWin.GetPort();
+			mConn.Connect(server, port);
+		} else
+		if (e.getActionCommand().equals("System")) {
+	        try {
+	        	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	        	SwingUtilities.updateComponentTreeUI(mRoot);
+	        	SwingUtilities.updateComponentTreeUI(mPopup);
+	        } catch (Exception e1) {
+	        	e1.printStackTrace();
+	        }
+		} else
+		if (e.getActionCommand().equals("Java")) {
+	        try {
+	        	UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+	        	SwingUtilities.updateComponentTreeUI(mRoot);
+	        	SwingUtilities.updateComponentTreeUI(mPopup);
+	        } catch (Exception e1) {
+	        	e1.printStackTrace();
+	        }
+		}
+	}
+
+	public void Connected(String serverVersion, String springVersion,
+			String udpport, String servermode) {
+		mConnectWin.SetStatus("Connected");
+		String username = mConnectWin.GetUsername();
+		String password = mConnectWin.GetPassword();
+		mConn.Login(username, password);
+	}
+
+	public void Disconnected(String reason) {
+		if (!mConnectWin.isVisible())
+			ActivatePopup(mConnectWin);
+		mConnectWin.SetStatus(reason);
+	}
+
+	public void LoginFailed(String reason) {
+		mConnectWin.SetStatus(reason);
+	}
+
+	public void LoginSucceeded(String username) {
+		mConnectWin.SetStatus("Logged in as " + username);
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		mPopup.setVisible(false);
+	}
+
+	public void RegistrationAccepted() {
+		
+	}
+
+	public void RegistrationDenied(String reason) {
+		
+	}
+
+	public void ServerMsgBox(String msg, String url) {
+		
+	}
+
+	public void stateChanged(ChangeEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 }

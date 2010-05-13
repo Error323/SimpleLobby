@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -53,9 +54,11 @@ public abstract class AConnection implements Runnable {
 				new InputStreamReader(mConnection.getInputStream()));
 			mOut = new PrintWriter(mConnection.getOutputStream(), true);
 			mConnected = true;
-			mData.clear();
+			mData.clear();				
+		} catch (UnknownHostException e) {
+			Disconnected("Unknown host");
 		} catch (IOException e) {
-			System.out.println(e);
+			Disconnected(e.getMessage());
 		}
 	}
 	
@@ -107,13 +110,13 @@ public abstract class AConnection implements Runnable {
 				try {
 					if (mIn.ready())
 						Received(mIn.readLine());
-					synchronized (this) {
-						if (!mData.isEmpty())
-							mOut.println(mData.remove());
-					}
 				} catch (IOException e) {
 					System.out.println(e);
 					Disconnect();
+				}
+				synchronized (this) {
+					if (!mData.isEmpty())
+						mOut.println(mData.remove());
 				}
 			}
 			try {
@@ -127,6 +130,12 @@ public abstract class AConnection implements Runnable {
 	 * @param data
 	 */
 	protected abstract void Received(String data);
+	
+	/**
+	 * 
+	 * @param reason
+	 */
+	protected abstract void Disconnected(String reason);
 	
 	/**
 	 * 

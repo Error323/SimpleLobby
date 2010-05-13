@@ -9,15 +9,20 @@ public class TASConnection extends AConnection {
 	private static final int PING_INTERVAL = 5000;
 	private long mStart;
 	
-	private IChatIn mChatIn;
+	private IChatListener mChatListener;
+	private IConnectionListener mConnListener;
 	
 	public TASConnection() {
 		super();
 		mStart = System.currentTimeMillis();
 	}
 	
-	public void AttachChatInterface(IChatIn chatInterface) {
-		mChatIn = chatInterface;
+	public void AttachChatInterface(IChatListener chatListener) {
+		mChatListener = chatListener;
+	}
+	
+	public void AttachConnectionInterface(IConnectionListener connListener) {
+		mConnListener = connListener;
 	}
 	
 	/**
@@ -48,45 +53,66 @@ public class TASConnection extends AConnection {
 		String splitted[] = data.split(" ");
 		String cmd = splitted[0];
 		
+		// Connection related commands
+		if (mConnListener == null)
+			return;
+		else
+		if (cmd.equals("TASServer")) {
+			mConnListener.Connected(splitted[1], splitted[2], splitted[3], splitted[4]);
+		} else
+		if (cmd.equals("ACCEPTED")) {
+			mConnListener.LoginSucceeded(splitted[1]);
+		} else
+		if (cmd.equals("DENIED")) {
+			mConnListener.LoginFailed(data.substring(GetStartIdx(splitted, 1)));
+		} else
+		if (cmd.equals("SERVERMSGBOX")) {
+			mConnListener.ServerMsgBox(data.substring(GetStartIdx(splitted, 1)), "");
+		}
+		else
+			
 		// Chat related commands
+		if (mChatListener == null)
+			return;
+		else
 		if (cmd.equals("SAID")) {
-			mChatIn.Said(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			mChatListener.Said(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
 		} else
 		if (cmd.equals("SAIDPRIVATE")) {
-			mChatIn.SaidPrivate(splitted[1], splitted[2]);
+			mChatListener.SaidPrivate(splitted[1], splitted[2]);
 		} else
 		if (cmd.equals("SERVERMSG")) {
-			mChatIn.ServerMsg(splitted[1]);
+			mChatListener.ServerMsg(splitted[1]);
 		} else
 		if (cmd.equals("CHANNELMSG")) {
-			mChatIn.ChannelMsg(splitted[1], data.substring(GetStartIdx(splitted,2)));
+			mChatListener.ChannelMsg(splitted[1], data.substring(GetStartIdx(splitted,2)));
 		} else
 		if (cmd.equals("FORCELEAVECHANNEL")) {
-			mChatIn.ForceLeaveChannel(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			mChatListener.ForceLeaveChannel(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
 		} else
 		if (cmd.equals("LEFT")) {
-			mChatIn.Left(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			mChatListener.Left(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
 		} else
 		if (cmd.equals("JOINED")) {
-			mChatIn.Joined(splitted[1], splitted[2]);
+			mChatListener.Joined(splitted[1], splitted[2]);
 		} else
 		if (cmd.equals("JOIN")) {
-			mChatIn.JoinSucceeded(splitted[1]);
+			mChatListener.JoinSucceeded(splitted[1]);
 		} else
 		if (cmd.equals("JOINFAILED")) {
-			mChatIn.JoinFailed(splitted[1], data.substring(GetStartIdx(splitted, 2)));
+			mChatListener.JoinFailed(splitted[1], data.substring(GetStartIdx(splitted, 2)));
 		} else
 		if (cmd.equals("SAIDEX")) {
-			mChatIn.SaidEx(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			mChatListener.SaidEx(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
 		}
 		if (cmd.equals("CHANNELTOPIC")) {
-			mChatIn.ChannelTopic(splitted[1], splitted[2], splitted[3], data.substring(GetStartIdx(splitted,4)));
+			mChatListener.ChannelTopic(splitted[1], splitted[2], splitted[3], data.substring(GetStartIdx(splitted,4)));
 		} else
 		if (cmd.equals("MOTD")) {
 			if (data.length() == 4)
-				mChatIn.Motd("");
+				mChatListener.Motd("");
 			else
-				mChatIn.Motd(data.substring(5));
+				mChatListener.Motd(data.substring(5));
 		}
 	}
 	
@@ -120,12 +146,10 @@ public class TASConnection extends AConnection {
 	}
 	
 	public void ChannelTopic(String channel, String topic) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void ForceLeaveChannel(String channel, String username, String reason) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -141,11 +165,15 @@ public class TASConnection extends AConnection {
 	}
 
 	public void SayPrivate(String username, String msg) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void SayEx(String channel, String msg) {
 		Send("SAYEX " + channel + " " + msg);
+	}
+
+	@Override
+	protected void Disconnected(String reason) {
+		mConnListener.Disconnected(reason);
 	}
 }

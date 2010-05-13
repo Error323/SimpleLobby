@@ -3,7 +3,7 @@ package com.spring.tasclient.simplelobby;
 /**
  * The Chat interface handles incoming server messages related to chat
  */
-public interface IChatIn {
+public interface IChatListener {
 	
 	/**
 	 * CHANNEL channame usercount

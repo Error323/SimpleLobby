@@ -3,6 +3,7 @@ package com.spring.tasclient.simplelobby.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
@@ -24,12 +25,12 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
-import com.spring.tasclient.simplelobby.IChatIn;
-import com.spring.tasclient.simplelobby.IChatOut;
+import com.javadocking.dockable.DraggableContent;
+import com.javadocking.drag.DragListener;
+import com.spring.tasclient.simplelobby.IChatListener;
 
 @SuppressWarnings("serial")
-public class ChatWindow extends JComponent 
-	implements ActionListener, IChatIn, ChangeListener {
+public class ChatWindow extends JPanel implements DraggableContent, IChatListener, ChangeListener {
 	
 	private static final Color bg = new Color(0xEEEEEE);
 	
@@ -126,11 +127,11 @@ public class ChatWindow extends JComponent
 
 	private Hashtable<String, Channel> mChannels;
 	private Channel mActive, mSystem;
-	private IChatOut mChatOut;
 	private JTextField mInput;
 	private JTabbedPane mTabs;
 
-	public ChatWindow() {
+	public ChatWindow(ActionListener al) {
+		super(new FlowLayout());
 		mTabs = new JTabbedPane();
 		mInput = new JTextField();
 		mChannels = new Hashtable<String, Channel>();
@@ -138,7 +139,7 @@ public class ChatWindow extends JComponent
 		
 		mTabs.setMinimumSize(new Dimension(640, 480));
 		mTabs.addChangeListener(this);
-		mInput.addActionListener(this);
+		mInput.addActionListener(al);
 		
 		JLabel inputLabel = new JLabel("Say: ");
 		inputLabel.setLabelFor(mInput);
@@ -151,10 +152,6 @@ public class ChatWindow extends JComponent
 		setLayout(new BorderLayout());
 		add(mTabs, BorderLayout.CENTER);
 		add(inputPane, BorderLayout.SOUTH);
-	}
-	
-	public void AttachOutgoingInterface(IChatOut outgoing) {
-		mChatOut = outgoing;
 	}
 	
 	public void Channel(String channel, String usercount) {
@@ -245,7 +242,7 @@ public class ChatWindow extends JComponent
 		mChannels.get(channel).Say("* " + username + " " + msg, "sayex");
 	}
 
-	public void actionPerformed(ActionEvent e) {
+		/*
 		if (e.getSource() == mInput) {
 			String s = mInput.getText();
 			if (s.length() > 0 && s.charAt(0) == '/') {
@@ -278,12 +275,18 @@ public class ChatWindow extends JComponent
 			}
 			mInput.setText("");
 		}
-	}
-
+		*/
 	public void stateChanged(ChangeEvent e) {
 		if (e.getSource() == mTabs) {
 			mActive = (Channel) mTabs.getSelectedComponent();
 			mTabs.setTitleAt(mTabs.getSelectedIndex(), "#" + mActive.mName);
 		}
+	}
+
+	public void addDragListener(DragListener dragListener) {
+		addMouseListener(dragListener);
+		addMouseMotionListener(dragListener);
+//		label.addMouseListener(dragListener);
+//		label.addMouseMotionListener(dragListener);
 	}
 }
