@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -41,24 +42,31 @@ public abstract class AConnection implements Runnable {
 		synchronized (this) {
 			if (mConnected) {
 				System.err.println("Already connected to " + mConnection);
+				return;
 			}
 		}
 		
 		System.out.println("Connecting to " + server + ":" + port);
-		mServer  = server;
-		mPort    = port;
+		mServer = server;
+		mPort = port;
 		try {
+			Connecting();
 			mConnection = new Socket(mServer, mPort);
 			mConnection.setSoTimeout(CONNECTION_TIME_OUT);
 			mIn = new BufferedReader(
 				new InputStreamReader(mConnection.getInputStream()));
 			mOut = new PrintWriter(mConnection.getOutputStream(), true);
 			mConnected = true;
-			mData.clear();				
+			mData.clear();
+		} catch (SocketTimeoutException e) {
+			Disconnect();
+			NetworkTimeout(e);
 		} catch (UnknownHostException e) {
-			Disconnected("Unknown host");
+			Disconnect();
+			UnknownHost(e);
 		} catch (IOException e) {
-			Disconnected(e.getMessage());
+			Disconnect();
+			NetworkError(e);
 		}
 	}
 	
@@ -69,6 +77,9 @@ public abstract class AConnection implements Runnable {
 		if (mConnected)
 			Disconnect();
 		mStopped = true;
+		mConnection = null;
+		mIn = null;
+		mOut = null;
 		synchronized (this) {
 			try {
 				mThread.join();
@@ -103,6 +114,7 @@ public abstract class AConnection implements Runnable {
 		return mConnected;
 	}
 	
+	@Override
 	public void run() {
 		while (!mStopped) {
 			if (mConnected) {
@@ -111,8 +123,8 @@ public abstract class AConnection implements Runnable {
 					if (mIn.ready())
 						Received(mIn.readLine());
 				} catch (IOException e) {
-					System.out.println(e);
 					Disconnect();
+					NetworkError(e);
 				}
 				synchronized (this) {
 					if (!mData.isEmpty())
@@ -129,18 +141,6 @@ public abstract class AConnection implements Runnable {
 	 * 
 	 * @param data
 	 */
-	protected abstract void Received(String data);
-	
-	/**
-	 * 
-	 * @param reason
-	 */
-	protected abstract void Disconnected(String reason);
-	
-	/**
-	 * 
-	 * @param data
-	 */
 	protected void Send(String data) {
 		synchronized (this) {
 			if (!mConnected)
@@ -150,8 +150,10 @@ public abstract class AConnection implements Runnable {
 		}
 	}
 	
-	/**
-	 * 
-	 */
+	protected abstract void Received(String data);
+	protected abstract void NetworkTimeout(Exception e);
+	protected abstract void UnknownHost(Exception e);
+	protected abstract void NetworkError(Exception e);
 	protected abstract void Update();
+	protected abstract void Connecting();
 }

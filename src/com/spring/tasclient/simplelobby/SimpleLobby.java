@@ -5,11 +5,10 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.event.ChangeEvent;
 
-import com.spring.tasclient.simplelobby.ui.ChatWindow;
 import com.spring.tasclient.simplelobby.ui.ConnectWindow;
 import com.spring.tasclient.simplelobby.ui.MainWindow;
 import com.spring.tasclient.simplelobby.ui.MenuBar;
@@ -22,7 +21,6 @@ public class SimpleLobby implements ActionListener, IConnectionListener {
 	private static JFrame mPopup;
 	private static JFrame mRoot;
 	private static ConnectWindow mConnectWin;
-	private static ChatWindow mChatWin;
 	
 	private TASConnection mConn;
 
@@ -45,17 +43,13 @@ public class SimpleLobby implements ActionListener, IConnectionListener {
         //Display the window.
         mRoot.setVisible(true);
         mRoot.setSize(1024, 768);
-		mRoot.setLocation(100, 100);
+		mRoot.setLocation(100+1920, 100);
         
         //Popup window
 		mPopup = new JFrame();
 		mPopup.setVisible(false);
 		
 		mConnectWin = new ConnectWindow(sl);
-		mChatWin = new ChatWindow(sl);
-		sl.mConn.AttachChatInterface(mChatWin);
-		
-		main.AddDockable("Chat", mChatWin);
 	}
 	
 	public static void main(String[] args) {
@@ -83,9 +77,16 @@ public class SimpleLobby implements ActionListener, IConnectionListener {
 			ActivatePopup(mConnectWin);
 		} else
 		if (e.getActionCommand().equals("Serverconnect")) {
-			String server = mConnectWin.GetServer();
-			int port = mConnectWin.GetPort();
-			mConn.Connect(server, port);
+			if (!mConn.IsConnected()) {
+				String server = mConnectWin.GetServer();
+				int port = mConnectWin.GetPort();
+				mConn.Connect(server, port);
+			}
+			else {
+				String username = mConnectWin.GetUsername();
+				String password = mConnectWin.GetPassword();
+				mConn.Login(username, password);
+			}
 		} else
 		if (e.getActionCommand().equals("System")) {
 	        try {
@@ -116,9 +117,9 @@ public class SimpleLobby implements ActionListener, IConnectionListener {
 	}
 
 	public void Disconnected(String reason) {
-		if (!mConnectWin.isVisible())
-			ActivatePopup(mConnectWin);
+		System.err.println("Disconnected: " + reason);
 		mConnectWin.SetStatus(reason);
+		JOptionPane.showMessageDialog(null, reason, "Disconnected", JOptionPane.WARNING_MESSAGE);
 	}
 
 	public void LoginFailed(String reason) {
@@ -127,12 +128,6 @@ public class SimpleLobby implements ActionListener, IConnectionListener {
 
 	public void LoginSucceeded(String username) {
 		mConnectWin.SetStatus("Logged in as " + username);
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		mPopup.setVisible(false);
 	}
 
@@ -148,8 +143,8 @@ public class SimpleLobby implements ActionListener, IConnectionListener {
 		
 	}
 
-	public void stateChanged(ChangeEvent e) {
-		// TODO Auto-generated method stub
-		
+	@Override
+	public void Pong(long ping) {
+		System.out.println("ping: " + ping);
 	}
 }

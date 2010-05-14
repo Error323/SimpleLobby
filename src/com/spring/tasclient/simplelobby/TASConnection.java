@@ -6,8 +6,11 @@ import java.security.NoSuchAlgorithmException;
 import org.apache.commons.codec.binary.Base64;
 
 public class TASConnection extends AConnection {
-	private static final int PING_INTERVAL = 5000;
+	private static final int PING_INTERVAL = 1000;
+	
+	private long mPingTime;
 	private long mStart;
+	private boolean mPongReceived;
 	
 	private IChatListener mChatListener;
 	private IConnectionListener mConnListener;
@@ -54,9 +57,9 @@ public class TASConnection extends AConnection {
 		String cmd = splitted[0];
 		
 		// Connection related commands
-		if (mConnListener == null)
+		if (mConnListener == null) {
 			return;
-		else
+		} else
 		if (cmd.equals("TASServer")) {
 			mConnListener.Connected(splitted[1], splitted[2], splitted[3], splitted[4]);
 		} else
@@ -70,11 +73,16 @@ public class TASConnection extends AConnection {
 			mConnListener.ServerMsgBox(data.substring(GetStartIdx(splitted, 1)), "");
 		}
 		else
+		if (cmd.equals("PONG")) {
+			mPongReceived = true;
+			mPingTime = System.currentTimeMillis() - mStart;
+			mConnListener.Pong(mPingTime);
+		}
 			
 		// Chat related commands
-		if (mChatListener == null)
+		if (mChatListener == null) {
 			return;
-		else
+		} else
 		if (cmd.equals("SAID")) {
 			mChatListener.Said(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
 		} else
@@ -119,10 +127,17 @@ public class TASConnection extends AConnection {
 	@Override
 	protected void Update() {
 		long stop = System.currentTimeMillis();
-		if (stop - mStart > PING_INTERVAL) {
+		long timeout = stop - mStart;
+		
+		if (timeout > CONNECTION_TIME_OUT) {
+			mConnListener.Disconnected("Network Timeout");
+			Disconnect();
+		} else
+		if (mPongReceived && timeout > PING_INTERVAL) {
 			Send("PING");
+			mPongReceived = false;
 			mStart = stop;
-		}
+		}		
 	}
 
 	/**
@@ -171,9 +186,29 @@ public class TASConnection extends AConnection {
 	public void SayEx(String channel, String msg) {
 		Send("SAYEX " + channel + " " + msg);
 	}
+	
+	public long GetPing() {
+		return mPingTime;
+	}
 
 	@Override
-	protected void Disconnected(String reason) {
-		mConnListener.Disconnected(reason);
+	protected void NetworkError(Exception e) {
+		mConnListener.Disconnected(e.getMessage());
+	}
+
+	@Override
+	protected void NetworkTimeout(Exception e) {
+		mConnListener.Disconnected("Network Timeout");
+	}
+
+	@Override
+	protected void UnknownHost(Exception e) {
+		mConnListener.Disconnected("Unknown Host");
+	}
+
+	@Override
+	protected void Connecting() {
+		mStart = System.currentTimeMillis();
+		mPongReceived = true;
 	}
 }

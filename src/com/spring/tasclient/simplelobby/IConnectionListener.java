@@ -12,7 +12,8 @@ public interface IConnectionListener {
 	 * @param udpport
 	 * @param servermode
 	 */
-	public void Connected(String serverVersion, String springVersion, String udpport, String servermode);
+	public void Connected(String serverVersion, String springVersion, 
+			String udpport, String servermode);
 	
 	/**
 	 * REGISTRATIONDENIED {reason}
@@ -69,4 +70,13 @@ public interface IConnectionListener {
 	 * @param reason
 	 */
 	public void Disconnected(String reason);
+	
+	/**
+	 * PONG
+	 * 
+	 * Returns ping time
+	 * 
+	 * @param ping
+	 */
+	public void Pong(long ping);
 }

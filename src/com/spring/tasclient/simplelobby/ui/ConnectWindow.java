@@ -22,7 +22,7 @@ public class ConnectWindow extends JPanel {
 		mServer = new JTextField("taspringmaster.clan-sy.com");
 		mName = new JTextField("[CoW]Error323");
 		mPort = new JTextField("8200");
-		mPassword = new JPasswordField("edamcm23");
+		mPassword = new JPasswordField("");
 		Dimension d = new Dimension(200, 20);
 		mServer.setPreferredSize(d);
 		mPort.setPreferredSize(d);
