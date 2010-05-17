@@ -29,7 +29,6 @@ public class MainWindow extends JPanel {
 		
 		FloatDockModel dockModel = new FloatDockModel();
 		dockModel.addOwner(main.getName(), main);
-
 		// Give the dock model to the docking manager.
 		DockingManager.setDockModel(dockModel);
 		

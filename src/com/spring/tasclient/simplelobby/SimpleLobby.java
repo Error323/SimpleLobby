@@ -45,6 +45,7 @@ public class SimpleLobby implements IConnectionListener, IConnWinListener {
         MainWindow mainWin = new MainWindow(root);
         root.getContentPane().add(mainWin);
 		mChatWin = new ChatWindow();
+		mChatWin.AttachHandler(mChatHandler);
 		mChatHandler.AttachChatWinInterface(mChatWin);
 		mainWin.AddDockable("Chat", mChatWin);
 		

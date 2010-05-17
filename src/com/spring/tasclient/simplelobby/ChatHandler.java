@@ -6,14 +6,14 @@ import com.spring.tasclient.simplelobby.ChatUserModel.Column;
 import com.spring.tasclient.simplelobby.UserHandler.User;
 import com.spring.tasclient.simplelobby.interfaces.IChatListener;
 import com.spring.tasclient.simplelobby.interfaces.IChatUserListener;
-import com.spring.tasclient.simplelobby.interfaces.IChatWinInterface;
+import com.spring.tasclient.simplelobby.ui.ChatWindow;
 
 public class ChatHandler implements IChatListener, IChatUserListener {
 	TASConnection mConn;
 	UserHandler mUserHandler;
 	HashMap<String, ChatUserModel> mChannels;
 	
-	private IChatWinInterface mChatWinInterface;
+	private ChatWindow mChatWin;
 	
 	public ChatHandler(TASConnection conn, UserHandler userhandler) {
 		mChannels = new HashMap<String, ChatUserModel>();
@@ -21,26 +21,24 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 		mUserHandler = userhandler;
 	}
 	
-	public void AttachChatWinInterface(IChatWinInterface icwi) {
-		mChatWinInterface = icwi;
+	public void AttachChatWinInterface(ChatWindow chatwin) {
+		mChatWin = chatwin;
 	}
 
 	@Override
 	public void Channel(String channel, String usercount) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.Channel(channel, usercount);
 	}
 
 	@Override
 	public void ChannelMsg(String channel, String msg) {
-		
+		mChatWin.ChannelMsg(channel, msg);
 	}
 
 	@Override
 	public void ChannelTopic(String channel, String author, String changedtime,
 			String topic) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.ChannelTopic(channel, author, Long.parseLong(changedtime), topic);
 	}
 
 	@Override
@@ -61,21 +59,19 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 
 	@Override
 	public void ForceLeaveChannel(String channel, String username, String reason) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.ForceLeaveChannel(channel, username, reason);
 	}
 
 	@Override
 	public void JoinFailed(String channel, String reason) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.JoinFailed(channel, reason);
 	}
 
 	@Override
 	public void JoinSucceeded(String channel) {
 		ChatUserModel cum = new ChatUserModel();
 		mChannels.put(channel, cum);
-		mChatWinInterface.CreateChannel(channel, cum);
+		mChatWin.CreateChannel(channel, cum);
 	}
 
 	@Override
@@ -96,38 +92,32 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 
 	@Override
 	public void Motd(String msg) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.Motd(msg);
 	}
 
 	@Override
 	public void Said(String channel, String username, String msg) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.Said(channel, username, msg);
 	}
 
 	@Override
 	public void SaidEx(String channel, String username, String msg) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.SaidEx(channel, username, msg);
 	}
 
 	@Override
 	public void SaidPrivate(String username, String msg) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.SaidPrivate(username, msg);
 	}
 
 	@Override
 	public void SayPrivate(String username, String msg) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.SayPrivate(username, msg);
 	}
 
 	@Override
 	public void ServerMsg(String msg) {
-		// TODO Auto-generated method stub
-		
+		mChatWin.ServerMsg(msg);
 	}
 
 	@Override
@@ -136,7 +126,7 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 		if (user == null) return;
 		for (String channel : user.mChannels) {
 			ChatUserModel cum = mChannels.get(channel); 
-			cum.setValueAt(user.GetStatus(), username, Column.s.ordinal());
+			cum.setValueAt(user.GetStatus(), username, Column.Status.ordinal());
 		}
 	}
 
@@ -152,7 +142,7 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 		if (user == null) return;
 		for (String channel : user.mChannels) {
 			ChatUserModel cum = mChannels.get(channel); 
-			cum.setValueAt(user.GetStatus(), username, Column.s.ordinal());
+			cum.setValueAt(user.GetStatus(), username, Column.Status.ordinal());
 		}
 
 	}
@@ -170,8 +160,37 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 		if (user == null) return;
 		for (String channel : user.mChannels) {
 			ChatUserModel cum = mChannels.get(channel); 
-			cum.setValueAt(user.GetStatus(), username, Column.r.ordinal());
+			cum.setValueAt(user.GetStatus(), username, Column.Rank.ordinal());
 		}
 
+	}
+
+	public void Say(String text, String channel) {
+		if (text.length() > 0 && text.charAt(0) == '/') {
+			String splitted[] = text.substring(1).split(" ");
+			String cmd = splitted[0];
+			if (cmd.equals("join") || cmd.equals("j")) {
+				if (splitted.length > 1) {
+					splitted[1].replace("#", "");
+					if (splitted.length == 2)
+						mConn.Join(splitted[1], "");
+					else
+					if (splitted.length == 3)
+						mConn.Join(splitted[1], splitted[2]);
+				}
+			} else
+
+			if (cmd.equals("leave")) {
+				mConn.Leave(channel);
+				mChatWin.Leave(channel);
+			} else
+
+			if (cmd.equals("me")) {
+				mConn.SayEx(channel, text.substring(4));
+			}
+		}
+		else {
+			mConn.Say(channel, text);
+		}
 	}
 }
