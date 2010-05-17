@@ -1,4 +1,4 @@
-package com.spring.tasclient.simplelobby;
+package com.spring.tasclient.simplelobby.interfaces;
 
 /**
  * The Chat interface handles incoming server messages related to chat

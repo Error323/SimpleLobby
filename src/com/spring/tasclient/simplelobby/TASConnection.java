@@ -5,8 +5,12 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.spring.tasclient.simplelobby.interfaces.IChatListener;
+import com.spring.tasclient.simplelobby.interfaces.IConnectionListener;
+import com.spring.tasclient.simplelobby.interfaces.IUserHandlerListener;
+
 public class TASConnection extends AConnection {
-	private static final int PING_INTERVAL = 1000;
+	private static final int PING_INTERVAL = 5000;
 	
 	private long mPingTime;
 	private long mStart;
@@ -14,6 +18,7 @@ public class TASConnection extends AConnection {
 	
 	private IChatListener mChatListener;
 	private IConnectionListener mConnListener;
+	private IUserHandlerListener mUserHandlerListener;
 	
 	public TASConnection() {
 		super();
@@ -28,6 +33,46 @@ public class TASConnection extends AConnection {
 		mConnListener = connListener;
 	}
 	
+	public void AttachUserHandlerInterface(IUserHandlerListener userListener) {
+		mUserHandlerListener = userListener;
+	}
+	
+	public void ChannelTopic(String channel, String topic) {
+		
+	}
+	
+	@Override
+	protected void Connecting() {
+		mStart = System.currentTimeMillis();
+		mPongReceived = true;
+	}
+	
+	public void ForceLeaveChannel(String channel, String username, String reason) {
+		
+	}
+	
+	public long GetPing() {
+		return mPingTime;
+	}
+
+	private int GetStartIdx(String[] data, int N) {
+		int idx = 0;
+		for (int i = 0; i < N && i < data.length; i++)
+			idx += data[i].length()+1;
+		return idx;
+	}
+	
+	public void Join(String channel, String password) {
+		if (password.length() == 0)
+			Send("JOIN " + channel);
+		else
+			Send("JOIN " + channel + " " + password);
+	}
+	
+	public void Leave(String channel) {
+		Send("LEAVE " + channel);
+	}
+
 	/**
 	 * 
 	 * @param username
@@ -42,14 +87,41 @@ public class TASConnection extends AConnection {
 			+ SimpleLobby.NAME + " "
 			+ SimpleLobby.VERSION);
 	}
-	
-	private int GetStartIdx(String[] data, int N) {
-		int idx = 0;
-		for (int i = 0; i < N && i < data.length; i++)
-			idx += data[i].length()+1;
-		return idx;
+
+	/**
+	 * 
+	 * @param password
+	 * @return md5hash
+	 */
+	private String md5(String password) {
+		try {
+			MessageDigest md5 = java.security.MessageDigest.getInstance("MD5");
+			md5.update(password.getBytes());
+			return Base64.encodeBase64String(md5.digest()).trim();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public void MyBattleStatus(String mMyUserName, int battlestatus) {
+		Send("MYBATTLESTATUS " + battlestatus);
+	}
+
+	public void MyStatus(String mMyUserName, int status) {
+		Send("MYSTATUS " + status);
+	}
+
+	@Override
+	protected void NetworkError(Exception e) {
+		mConnListener.Disconnected(e.getMessage());
 	}
 	
+	@Override
+	protected void NetworkTimeout(Exception e) {
+		mConnListener.Disconnected("Network Timeout");
+	}
+
 	@Override
 	protected void Received(String data) {
 		System.out.println(data);
@@ -71,18 +143,49 @@ public class TASConnection extends AConnection {
 		} else
 		if (cmd.equals("SERVERMSGBOX")) {
 			mConnListener.ServerMsgBox(data.substring(GetStartIdx(splitted, 1)), "");
-		}
-		else
+		} else
 		if (cmd.equals("PONG")) {
 			mPongReceived = true;
 			mPingTime = System.currentTimeMillis() - mStart;
 			mConnListener.Pong(mPingTime);
-		}
+		} else
+		if (cmd.equals("AGREEMENT")) {
+			mConnListener.Agreement(data.substring(GetStartIdx(splitted, 1)));
+		} else
+		if (cmd.equals("AGREEMENTEND")) {
+			mConnListener.AgreementEnd();
+		} else
+		if (cmd.equals("REGISTRATIONDENIED")) {
+			mConnListener.RegistrationDenied(data.substring(GetStartIdx(splitted, 1)));
+		} else
+		if (cmd.equals("REGISTRATIONACCEPTED")) {
+			mConnListener.RegistrationAccepted();
+		} else
+			
+		// User related commands
+		if (mUserHandlerListener == null) {
+			return;
+		} else
+		if (cmd.equals("CLIENTSTATUS")) {
+			mUserHandlerListener.ClientStatus(splitted[1], Integer.parseInt(splitted[2]));
+		} else
+		if (cmd.equals("CLIENTBATTLESTATUS")) {
+			mUserHandlerListener.ClientBattleStatus(splitted[1], Integer.parseInt(splitted[2]), Integer.parseInt(splitted[3]));
+		} else
+		if (cmd.equals("ADDUSER")) {
+			mUserHandlerListener.AddUser(splitted[1], splitted[2], splitted[3]);
+		} else
+		if (cmd.equals("REMOVEUSER")) {
+			mUserHandlerListener.RemoveUser(splitted[1]);
+		} else
 			
 		// Chat related commands
 		if (mChatListener == null) {
 			return;
 		} else
+		if (cmd.equals("CLIENTS")) {
+			mChatListener.Clients(splitted[1], data.substring(GetStartIdx(splitted, 2)));
+		}
 		if (cmd.equals("SAID")) {
 			mChatListener.Said(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
 		} else
@@ -99,7 +202,10 @@ public class TASConnection extends AConnection {
 			mChatListener.ForceLeaveChannel(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
 		} else
 		if (cmd.equals("LEFT")) {
-			mChatListener.Left(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			if (splitted.length == 4)
+				mChatListener.Left(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			else
+				mChatListener.Left(splitted[1], splitted[2], "");
 		} else
 		if (cmd.equals("JOINED")) {
 			mChatListener.Joined(splitted[1], splitted[2]);
@@ -123,7 +229,24 @@ public class TASConnection extends AConnection {
 				mChatListener.Motd(data.substring(5));
 		}
 	}
-	
+
+	public void Say(String channel, String msg) {
+		Send("SAY " + channel + " " + msg);
+	}
+
+	public void SayEx(String channel, String msg) {
+		Send("SAYEX " + channel + " " + msg);
+	}
+
+	public void SayPrivate(String username, String msg) {
+		
+	}
+
+	@Override
+	protected void UnknownHost(Exception e) {
+		mConnListener.Disconnected("Unknown Host");
+	}
+
 	@Override
 	protected void Update() {
 		long stop = System.currentTimeMillis();
@@ -140,75 +263,11 @@ public class TASConnection extends AConnection {
 		}		
 	}
 
-	/**
-	 * 
-	 * @param password
-	 * @return md5hash
-	 */
-	private String md5(String password) {
-		try {
-			MessageDigest md5 = java.security.MessageDigest.getInstance("MD5");
-			md5.update(password.getBytes());
-			return Base64.encodeBase64String(md5.digest()).trim();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		return null;
+	public void Register(String username, String password) {
+		Send("REGISTER " + username + " " + md5(password));
 	}
 	
-	public void Say(String channel, String msg) {
-		Send("SAY " + channel + " " + msg);
-	}
-	
-	public void ChannelTopic(String channel, String topic) {
-		
-	}
-
-	public void ForceLeaveChannel(String channel, String username, String reason) {
-		
-	}
-
-	public void Join(String channel, String password) {
-		if (password.length() == 0)
-			Send("JOIN " + channel);
-		else
-			Send("JOIN " + channel + " " + password);
-	}
-
-	public void Leave(String channel) {
-		Send("LEAVE " + channel);
-	}
-
-	public void SayPrivate(String username, String msg) {
-		
-	}
-
-	public void SayEx(String channel, String msg) {
-		Send("SAYEX " + channel + " " + msg);
-	}
-	
-	public long GetPing() {
-		return mPingTime;
-	}
-
-	@Override
-	protected void NetworkError(Exception e) {
-		mConnListener.Disconnected(e.getMessage());
-	}
-
-	@Override
-	protected void NetworkTimeout(Exception e) {
-		mConnListener.Disconnected("Network Timeout");
-	}
-
-	@Override
-	protected void UnknownHost(Exception e) {
-		mConnListener.Disconnected("Unknown Host");
-	}
-
-	@Override
-	protected void Connecting() {
-		mStart = System.currentTimeMillis();
-		mPongReceived = true;
+	public void ConfirmAgreement() {
+		Send("CONFIRMAGREEMENT");
 	}
 }
