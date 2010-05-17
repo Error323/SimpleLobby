@@ -81,16 +81,21 @@ public class ChatWindow extends JPanel implements DraggableContent,
 		}
 		
 		public void Say(String msg, String style) {
+			/*
 			if (mActive != this) {
 				for (int i = 0; i < mTabs.getComponentCount(); i++) {
 					if (mTabs.getComponentAt(i) == this) {
+						if (msg.contains("Error323")) {
+							
+						}
 						if (this == mSystem)
 							mTabs.setTitleAt(i, "!" + mName);
 						else
-							mTabs.setTitleAt(i, "!#" + mName);
+							mTabs.setBackgroundAt(i, Color.RED);
 					}
 				}
 			}
+			*/
 			
 			String lines[] = msg.split("\\\\n");
 			for (int i = 0; i < lines.length; i++) {
@@ -216,10 +221,26 @@ public class ChatWindow extends JPanel implements DraggableContent,
 		mSystem.Say(msg, "regular");
 	}
 
-	public void Said(String channel, String username, String msg) {
-		mChannels.get(channel).Say(
-				"<" + username + "> " + msg,
-				"regular");
+	public void Said(final String channel, final String username, final String msg) {
+		Channel c = mChannels.get(channel);
+		
+		if (mActive != c) {
+			for (int i = 0; i < mTabs.getComponentCount(); i++) {
+				if (mTabs.getComponentAt(i) == c) {
+					if (msg.regionMatches(0, "Error323", 0, 8)) {
+						mTabs.setBackgroundAt(i, Color.RED);
+						c.Say("<" + username + "> " + msg, "alert");
+						break;
+					}
+					else if (mTabs.getBackgroundAt(i) != Color.RED) {
+						mTabs.setBackgroundAt(i, Color.ORANGE);
+					}
+					c.Say("<" + username + "> " + msg, "regular");
+					break;
+				}
+			}
+		}
+		else c.Say("<" + username + "> " + msg, "regular");
 	}
 
 	public void SaidEx(String channel, String username, String msg) {
@@ -249,7 +270,7 @@ public class ChatWindow extends JPanel implements DraggableContent,
 			if (mActive == mSystem)
 				mTabs.setTitleAt(mTabs.getSelectedIndex(), mActive.mName);
 			else
-				mTabs.setTitleAt(mTabs.getSelectedIndex(), "#" + mActive.mName);
+				mTabs.setBackgroundAt(mTabs.getSelectedIndex(), mTabs.getBackground());
 			mActive.add(mInput, BorderLayout.SOUTH);
 		}
 		mInput.requestFocus();
@@ -270,6 +291,9 @@ public class ChatWindow extends JPanel implements DraggableContent,
         s = doc.addStyle("time", regular);
         StyleConstants.setBold(s, true);
         StyleConstants.setForeground(s, Color.DARK_GRAY);
+        
+        s = doc.addStyle("alert", regular);
+        StyleConstants.setForeground(s, Color.ORANGE);
         
         s = doc.addStyle("error", regular);
         StyleConstants.setForeground(s, Color.RED);

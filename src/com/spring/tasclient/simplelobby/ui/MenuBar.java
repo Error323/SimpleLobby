@@ -21,7 +21,6 @@ public class MenuBar extends JMenuBar implements ActionListener {
 		mConnectWindow = cw;
 		JMenu server = new JMenu("Simplelobby");
 		JMenu options = new JMenu("Options");
-		JMenu window = new JMenu("Window");
 		JMenu look = new JMenu("Look and feel");
 		JMenu help = new JMenu("Help");
 
@@ -39,7 +38,6 @@ public class MenuBar extends JMenuBar implements ActionListener {
 		
 		add(server);
 		add(options);
-		add(window);
 		add(look);
 		add(help);
 	}

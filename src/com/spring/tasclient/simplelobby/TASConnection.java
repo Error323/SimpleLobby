@@ -5,6 +5,7 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.spring.tasclient.simplelobby.interfaces.IBattleListener;
 import com.spring.tasclient.simplelobby.interfaces.IChatListener;
 import com.spring.tasclient.simplelobby.interfaces.IConnectionListener;
 import com.spring.tasclient.simplelobby.interfaces.IUserHandlerListener;
@@ -19,6 +20,7 @@ public class TASConnection extends AConnection {
 	private IChatListener mChatListener;
 	private IConnectionListener mConnListener;
 	private IUserHandlerListener mUserHandlerListener;
+	private IBattleListener mBattleListener;
 	
 	public TASConnection() {
 		super();
@@ -35,6 +37,10 @@ public class TASConnection extends AConnection {
 	
 	public void AttachUserHandlerInterface(IUserHandlerListener userListener) {
 		mUserHandlerListener = userListener;
+	}
+	
+	public void AttachBattleListener(IBattleListener battleListener) {
+		mBattleListener = battleListener;
 	}
 	
 	public void ChannelTopic(String channel, String topic) {
@@ -128,44 +134,8 @@ public class TASConnection extends AConnection {
 		String splitted[] = data.split(" ");
 		String cmd = splitted[0];
 		
-		// Connection related commands
-		if (mConnListener == null) {
-			return;
-		} else
-		if (cmd.equals("TASServer")) {
-			mConnListener.Connected(splitted[1], splitted[2], splitted[3], splitted[4]);
-		} else
-		if (cmd.equals("ACCEPTED")) {
-			mConnListener.LoginSucceeded(splitted[1]);
-		} else
-		if (cmd.equals("DENIED")) {
-			mConnListener.LoginFailed(data.substring(GetStartIdx(splitted, 1)));
-		} else
-		if (cmd.equals("SERVERMSGBOX")) {
-			mConnListener.ServerMsgBox(data.substring(GetStartIdx(splitted, 1)), "");
-		} else
-		if (cmd.equals("PONG")) {
-			mPongReceived = true;
-			mPingTime = System.currentTimeMillis() - mStart;
-			mConnListener.Pong(mPingTime);
-		} else
-		if (cmd.equals("AGREEMENT")) {
-			mConnListener.Agreement(data.substring(GetStartIdx(splitted, 1)));
-		} else
-		if (cmd.equals("AGREEMENTEND")) {
-			mConnListener.AgreementEnd();
-		} else
-		if (cmd.equals("REGISTRATIONDENIED")) {
-			mConnListener.RegistrationDenied(data.substring(GetStartIdx(splitted, 1)));
-		} else
-		if (cmd.equals("REGISTRATIONACCEPTED")) {
-			mConnListener.RegistrationAccepted();
-		} else
-			
 		// User related commands
-		if (mUserHandlerListener == null) {
-			return;
-		} else
+		if (mUserHandlerListener != null) {
 		if (cmd.equals("CLIENTSTATUS")) {
 			mUserHandlerListener.ClientStatus(splitted[1], Integer.parseInt(splitted[2]));
 		} else
@@ -177,12 +147,10 @@ public class TASConnection extends AConnection {
 		} else
 		if (cmd.equals("REMOVEUSER")) {
 			mUserHandlerListener.RemoveUser(splitted[1]);
-		} else
+		}
+		}
 			
 		// Chat related commands
-		if (mChatListener == null) {
-			return;
-		} else
 		if (cmd.equals("CLIENTS")) {
 			mChatListener.Clients(splitted[1], data.substring(GetStartIdx(splitted, 2)));
 		}
@@ -227,6 +195,64 @@ public class TASConnection extends AConnection {
 				mChatListener.Motd("");
 			else
 				mChatListener.Motd(data.substring(5));
+		} else
+		
+		// Battle related commands
+		if (mBattleListener != null) {
+		if (cmd.equals("BATTLEOPENED")) {
+			mBattleListener.BattleOpened(splitted[1], splitted[2], splitted[3], splitted[4], splitted[5], splitted[6], splitted[7], splitted[8], splitted[9], splitted[10], splitted[11], splitted[12], splitted[13]);
+		} else
+		if (cmd.equals("BATTLECLOSED")) {
+			mBattleListener.BattleClosed(splitted[1]);
+		} else
+		if (cmd.equals("JOINBATTLE")) {
+			mBattleListener.JoinBattle(splitted[1]);
+		} else
+		if (cmd.equals("JOINBATTLEFAILED")) {
+			mBattleListener.JoinBattleFailed(data.substring(GetStartIdx(splitted, 0)));
+		} else
+		if (cmd.equals("JOINEDBATTLE")) {
+			mBattleListener.JoinedBattle(splitted[1], splitted[2]);
+		} else
+		if (cmd.equals("LEFTBATTLE")) {
+			mBattleListener.LeftBattle(splitted[1], splitted[2]);
+		} else
+		if (cmd.equals("UPDATEBATTLEINFO")) {
+			mBattleListener.UpdateBattleInfo(splitted[1], splitted[2], splitted[3], splitted[4], splitted[5]);
+		}
+		}
+		
+		if (mConnListener == null) {
+		// Connection related commands
+		if (cmd.equals("TASServer")) {
+			mConnListener.Connected(splitted[1], splitted[2], splitted[3], splitted[4]);
+		} else
+		if (cmd.equals("ACCEPTED")) {
+			mConnListener.LoginSucceeded(splitted[1]);
+		} else
+		if (cmd.equals("DENIED")) {
+			mConnListener.LoginFailed(data.substring(GetStartIdx(splitted, 1)));
+		} else
+		if (cmd.equals("SERVERMSGBOX")) {
+			mConnListener.ServerMsgBox(data.substring(GetStartIdx(splitted, 1)), "");
+		} else
+		if (cmd.equals("PONG")) {
+			mPongReceived = true;
+			mPingTime = System.currentTimeMillis() - mStart;
+			mConnListener.Pong(mPingTime);
+		} else
+		if (cmd.equals("AGREEMENT")) {
+			mConnListener.Agreement(data.substring(GetStartIdx(splitted, 1)));
+		} else
+		if (cmd.equals("AGREEMENTEND")) {
+			mConnListener.AgreementEnd();
+		} else
+		if (cmd.equals("REGISTRATIONDENIED")) {
+			mConnListener.RegistrationDenied(data.substring(GetStartIdx(splitted, 1)));
+		} else
+		if (cmd.equals("REGISTRATIONACCEPTED")) {
+			mConnListener.RegistrationAccepted();
+		}
 		}
 	}
 

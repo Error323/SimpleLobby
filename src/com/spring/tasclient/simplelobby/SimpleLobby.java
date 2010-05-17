@@ -71,7 +71,7 @@ public class SimpleLobby implements IConnectionListener, IConnWinListener {
 		mUserHandler = new UserHandler(mConn);
 		mChatHandler = new ChatHandler(mConn, mUserHandler);
 		mUserHandler.AttachChatUserInterface(mChatHandler);
-		mUserHandler.AttachBattleUserInterface(mBattleHandler);
+//		mUserHandler.AttachBattleUserInterface(mBattleHandler);
 		mConn.AttachUserHandlerInterface(mUserHandler);
 		mConn.AttachChatInterface(mChatHandler);
 		mConn.AttachConnectionInterface(this);

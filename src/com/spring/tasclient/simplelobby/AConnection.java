@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public abstract class AConnection implements Runnable {
+public abstract class AConnection implements Runnable{
 	public static final int CONNECTION_TIME_OUT = 20000;
 	
 	protected String           mServer;
@@ -114,7 +114,6 @@ public abstract class AConnection implements Runnable {
 		return mConnected;
 	}
 	
-	@Override
 	public void run() {
 		while (!mStopped) {
 			if (mConnected) {
