@@ -27,6 +27,7 @@ import javax.swing.text.StyledDocument;
 
 import com.javadocking.dockable.DraggableContent;
 import com.javadocking.drag.DragListener;
+import com.spring.tasclient.simplelobby.ChatUserModel;
 import com.spring.tasclient.simplelobby.interfaces.IChatWinInterface;
 
 public class ChatWindow extends JPanel implements DraggableContent, 

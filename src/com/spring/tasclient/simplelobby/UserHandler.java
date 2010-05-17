@@ -107,8 +107,8 @@ public class UserHandler implements IUserHandlerListener {
 		 */
 		public void SetBattleStatus(int battlestatus) {
 			// Extract the battlestatus information
-			boolean ready     = (battlestatus & (1<<1)) == 1;
-			boolean spectator = (battlestatus & (1<<10)) == 1;
+			boolean ready     = ((battlestatus >> 1) & 1) == 1;
+			boolean spectator = ((battlestatus >> 10) & 1) == 1;
 			int handicap      = (battlestatus >> 11) & 127;
 			int team          = (battlestatus >> 2) & 15;
 			int ally          = (battlestatus >> 6) & 15;
@@ -179,10 +179,10 @@ public class UserHandler implements IUserHandlerListener {
 		 */
 		public void SetStatus(int status) {
 			// Extract the status information
-			boolean ingame    = (status & (1<<0)) == 1;
-			boolean away      = (status & (1<<1)) == 1;
-			boolean moderator = (status & (1<<5)) == 1;
-			boolean bot       = (status & (1<<6)) == 1;
+			boolean ingame    = ((status >> 0) & 1) == 1;
+			boolean away      = ((status >> 1) & 1) == 1;
+			boolean moderator = ((status >> 5) & 1) == 1;
+			boolean bot       = ((status >> 6) & 1) == 1;
 			
 			Rank rank = Rank.Newbie;
 			switch ((status >> 2) & 7) {
@@ -218,13 +218,16 @@ public class UserHandler implements IUserHandlerListener {
 		}
 
 		public String GetStatus() {
-			String status = "available";
-			if (mInGame) {
-				status = "ingame";
-			} else
-			if (mAway) {
-				status = "away";
-			}
+			String status = "Available";
+			if (mInGame)
+				status = "Gaming";
+			else
+			if (mAway)
+				status = "Away";
+			if (mModerator)
+				status += "/Mod";
+			if (mBot)
+				status += "/Bot";
 			return status;
 		}
 	}

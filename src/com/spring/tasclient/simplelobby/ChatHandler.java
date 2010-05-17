@@ -2,12 +2,11 @@ package com.spring.tasclient.simplelobby;
 
 import java.util.HashMap;
 
+import com.spring.tasclient.simplelobby.ChatUserModel.Column;
 import com.spring.tasclient.simplelobby.UserHandler.User;
 import com.spring.tasclient.simplelobby.interfaces.IChatListener;
 import com.spring.tasclient.simplelobby.interfaces.IChatUserListener;
 import com.spring.tasclient.simplelobby.interfaces.IChatWinInterface;
-import com.spring.tasclient.simplelobby.ui.ChatUserModel;
-import com.spring.tasclient.simplelobby.ui.ChatUserModel.Column;
 
 public class ChatHandler implements IChatListener, IChatUserListener {
 	TASConnection mConn;

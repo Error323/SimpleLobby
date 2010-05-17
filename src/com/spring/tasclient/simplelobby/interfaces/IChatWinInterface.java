@@ -1,6 +1,6 @@
 package com.spring.tasclient.simplelobby.interfaces;
 
-import com.spring.tasclient.simplelobby.ui.ChatUserModel;
+import com.spring.tasclient.simplelobby.ChatUserModel;
 
 public interface IChatWinInterface {
 
