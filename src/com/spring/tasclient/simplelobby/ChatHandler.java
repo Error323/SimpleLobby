@@ -21,8 +21,11 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 		mUserHandler = userhandler;
 	}
 	
-	public void AttachChatWinInterface(ChatWindow chatwin) {
+	public void AttachChatWindow(ChatWindow chatwin) {
 		mChatWin = chatwin;
+		ChatUserModel cum = new ChatUserModel();
+		mChannels.put("server", cum);
+		mChatWin.CreateSystemChannel("server", cum);
 	}
 
 	@Override
@@ -59,6 +62,11 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 
 	@Override
 	public void ForceLeaveChannel(String channel, String username, String reason) {
+		ChatUserModel cum = mChannels.get(channel);
+		cum.Delete(username);
+		User user = mUserHandler.GetUser(username);
+		user.RemoveChannel(channel);
+		Say("/leave", channel);
 		mChatWin.ForceLeaveChannel(channel, username, reason);
 	}
 
@@ -80,6 +88,7 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 		User user = mUserHandler.GetUser(username);
 		cum.Insert(user.GetStatus(), user.mCountry, user.mRank, user.mName);
 		user.AddChannel(channel);
+		mChatWin.Joined(channel, username);
 	}
 
 	@Override
@@ -88,6 +97,7 @@ public class ChatHandler implements IChatListener, IChatUserListener {
 		cum.Delete(username);
 		User user = mUserHandler.GetUser(username);
 		user.RemoveChannel(channel);
+		mChatWin.Left(channel, username, reason);
 	}
 
 	@Override

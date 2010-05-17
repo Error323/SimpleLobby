@@ -13,7 +13,7 @@ import com.spring.tasclient.simplelobby.ui.ChatWindow;
 import com.spring.tasclient.simplelobby.ui.ConnectWindow;
 import com.spring.tasclient.simplelobby.ui.MainWindow;
 import com.spring.tasclient.simplelobby.ui.MenuBar;
-
+import com.error323.lobby.*;
 
 public class SimpleLobby implements IConnectionListener, IConnWinListener {
 	public static final String NAME       = "SimpleLobby";
@@ -25,6 +25,7 @@ public class SimpleLobby implements IConnectionListener, IConnWinListener {
 	
 	private static ConnectWindow mConnectWin;
 	private static ChatWindow mChatWin;
+	private static UnitsyncLibrary mUnitSync;
 	
 	public static void main(String[] args) {
 		final SimpleLobby sl = new SimpleLobby();
@@ -45,8 +46,7 @@ public class SimpleLobby implements IConnectionListener, IConnWinListener {
         MainWindow mainWin = new MainWindow(root);
         root.getContentPane().add(mainWin);
 		mChatWin = new ChatWindow();
-		mChatWin.AttachHandler(mChatHandler);
-		mChatHandler.AttachChatWinInterface(mChatWin);
+		mChatWin.LinkHandler(mChatHandler);
 		mainWin.AddDockable("Chat", mChatWin);
 		
         // Display the window.
@@ -75,6 +75,7 @@ public class SimpleLobby implements IConnectionListener, IConnWinListener {
 		mConn.AttachUserHandlerInterface(mUserHandler);
 		mConn.AttachChatInterface(mChatHandler);
 		mConn.AttachConnectionInterface(this);
+//		mUnitSync.Init(false, 0);
 	}
 
 	@Override
@@ -135,6 +136,7 @@ public class SimpleLobby implements IConnectionListener, IConnWinListener {
 		mConnectWin.SetActive(false);
 		mConn.Join("main", "");
 		mConn.Join("xta", "");
+		mConn.Join("springlobby", "");
 	}
 
 	public void MsgBox(final String title, final String msg, final int option) {

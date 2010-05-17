@@ -31,8 +31,6 @@ public class MenuBar extends JMenuBar implements ActionListener {
 		CreateMenuItem("Simplelobby", options);
 		CreateMenuItem("Spring", options);
 		
-		CreateMenuItem("Systemlog", window);
-		
 	    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
             CreateMenuItem(info.getName(), look);
 		

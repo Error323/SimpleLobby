@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
@@ -36,32 +37,6 @@ import com.spring.tasclient.simplelobby.ChatUserModel;
 
 public class ChatWindow extends JPanel implements DraggableContent, 
 		ChangeListener, ActionListener {
-	private Hashtable<String, Channel> mChannels;
-	private Channel mActive;
-	private JTextField mInput;
-	private JTabbedPane mTabs;
-	private SimpleDateFormat mFormat, mTopic;
-	private ChatHandler mChatHandler;
-	
-	public ChatWindow() {
-		super(new FlowLayout());
-		mTabs = new JTabbedPane();
-		mChannels = new Hashtable<String, Channel>();
-		mFormat = new SimpleDateFormat("[HH:mm]");
-		mTopic = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
-		mInput = new JTextField();
-		
-		mTabs.addChangeListener(this);
-		mInput.addActionListener(this);
-		
-		setLayout(new BorderLayout());
-		add(mTabs, BorderLayout.CENTER);
-	}
-	
-	public void AttachHandler(ChatHandler ch) {
-		mChatHandler = ch;
-	}
-	
 	private class Channel extends JComponent {
 		private String mName;
 		private JTextPane mOutput;
@@ -76,7 +51,7 @@ public class ChatWindow extends JPanel implements DraggableContent,
 			mUserTable = new JTable();
 
 			mOutput.setEditable(false);
-			mOutput.setAutoscrolls(true);
+			mOutput.setMargin(new Insets(3, 3, -4, 3));
 			mDoc = mOutput.getStyledDocument();
 			AddStyles(mDoc);
 			
@@ -92,15 +67,11 @@ public class ChatWindow extends JPanel implements DraggableContent,
 				mUserTable.addColumn(column);
 			}
 	        JScrollPane jspLeft = new JScrollPane(mOutput);
-	        jspLeft.setVerticalScrollBarPolicy(
-	                        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
 	        JScrollPane jspRight = new JScrollPane(mUserTable);
-	        jspRight.setVerticalScrollBarPolicy(
-	                        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 	        	        
 	        JSplitPane jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jspLeft, jspRight);	        
 	        add(jsp, BorderLayout.CENTER);
+	        jspLeft.setAutoscrolls(true);
 	        jspLeft.setMinimumSize(new Dimension(800, super.getHeight()));
 	        jspRight.setMinimumSize(new Dimension(150, super.getHeight()));
 	        jsp.setDividerLocation(jsp.getSize().width
@@ -113,7 +84,10 @@ public class ChatWindow extends JPanel implements DraggableContent,
 			if (mActive != this) {
 				for (int i = 0; i < mTabs.getComponentCount(); i++) {
 					if (mTabs.getComponentAt(i) == this) {
-						mTabs.setTitleAt(i, "!#" + mName);
+						if (this == mSystem)
+							mTabs.setTitleAt(i, "!" + mName);
+						else
+							mTabs.setTitleAt(i, "!#" + mName);
 					}
 				}
 			}
@@ -132,57 +106,32 @@ public class ChatWindow extends JPanel implements DraggableContent,
 					System.err.println("Couldn't insert initial text into text pane.");
 				}
 			}
+			mOutput.setCaretPosition(mDoc.getLength());
 		}
 	}
+	private Hashtable<String, Channel> mChannels;
+	private Channel mActive, mSystem;
+	private JTextField mInput;
+	private JTabbedPane mTabs;
+	private SimpleDateFormat mFormat, mTopic;
 	
-	private void AddStyles(StyledDocument doc) {
-		Style def = StyleContext.getDefaultStyleContext().
-						getStyle(StyleContext.DEFAULT_STYLE);
+	private ChatHandler mChatHandler;
+	
+	public ChatWindow() {
+		super(new FlowLayout());
+		mTabs = new JTabbedPane();
+		mChannels = new Hashtable<String, Channel>();
+		mFormat = new SimpleDateFormat("[HH:mm]");
+		mTopic = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
+		mInput = new JTextField();
 		
-        Style regular = doc.addStyle("regular", def);
-        StyleConstants.setFontFamily(def, "SansSerif");
-        StyleConstants.setForeground(def, Color.BLACK);
+		mTabs.addChangeListener(this);
+		mInput.addActionListener(this);
 		
-        Style s = doc.addStyle("sayex", regular);
-        StyleConstants.setBold(s, true);
-        StyleConstants.setForeground(s, Color.BLUE);
-        
-        s = doc.addStyle("time", regular);
-        StyleConstants.setBold(s, true);
-        StyleConstants.setForeground(s, Color.DARK_GRAY);
-        
-        s = doc.addStyle("error", regular);
-        StyleConstants.setBold(s, true);
-        StyleConstants.setForeground(s, Color.RED);
-
-        s = doc.addStyle("system", regular);
-        StyleConstants.setBold(s, true);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, Color.RED);
-        
-        s = doc.addStyle("topic", regular);
-        StyleConstants.setForeground(s, Color.GRAY);
-        
-        s = doc.addStyle("channel", regular);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, Color.BLUE);
+		setLayout(new BorderLayout());
+		add(mTabs, BorderLayout.CENTER);
 	}
 	
-	@Override
-	public void addDragListener(DragListener dragListener) {
-		addMouseListener(dragListener);
-		addMouseMotionListener(dragListener);
-	}
-
-	@Override
-	public void stateChanged(ChangeEvent e) {
-		if (e.getSource() == mTabs) {
-			mActive = (Channel) mTabs.getSelectedComponent();
-			mTabs.setTitleAt(mTabs.getSelectedIndex(), "#" + mActive.mName);
-			mActive.add(mInput, BorderLayout.SOUTH);
-		}		
-	}
-
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == mInput) {
@@ -190,23 +139,19 @@ public class ChatWindow extends JPanel implements DraggableContent,
 			mInput.setText("");
 		}
 	}
-
-	public void CreateChannel(String channel, ChatUserModel cum) {
-		mActive = new Channel(channel, cum);
-		mChannels.put(mActive.mName, mActive);
-		mTabs.add(mActive);
-		mTabs.setSelectedComponent(mActive);
-		mTabs.setTitleAt(mTabs.getSelectedIndex(), "#" + mActive.mName);
-		mInput.setFocusable(true);
+	
+	@Override
+	public void addDragListener(DragListener dragListener) {
+		addMouseListener(dragListener);
+		addMouseMotionListener(dragListener);
 	}
-
+	
 	public void Channel(String channel, String usercount) {
 		// TODO Auto-generated method stub
 	}
 
 	public void ChannelMsg(String channel, String msg) {
-		Channel c = mChannels.get(channel);
-		c.Say(msg, "channel");
+		mChannels.get(channel).Say(msg, "channel");
 	}
 
 	public void ChannelTopic(String channel, String author, long changedtime,
@@ -219,26 +164,62 @@ public class ChatWindow extends JPanel implements DraggableContent,
 		c.Say("**Set by " + author + " at " + mTopic.format(calendar.getTime()), "topic");
 	}
 
+	public Channel CreateChannel(String channel, ChatUserModel cum) {
+		mActive = new Channel(channel, cum);
+		mChannels.put(mActive.mName, mActive);
+		mTabs.add(mActive);
+		mTabs.setSelectedComponent(mActive);
+		mTabs.setTitleAt(mTabs.getSelectedIndex(), "#" + mActive.mName);
+		if (mSystem != null)
+			mSystem.Say("Joined #" + channel, "system");
+		return mActive;
+	}
+
+	public void CreateSystemChannel(String channel, ChatUserModel cum) {
+		mSystem = CreateChannel(channel, cum);
+		mTabs.setTitleAt(mTabs.getSelectedIndex(), mSystem.mName);
+	}
+
 	public void ForceLeaveChannel(String channel, String username, String reason) {
-		mChannels.get(channel).Say(
-				username + " left (" + reason + ")",
-				"channel");
+		if (reason.length() > 0)
+			reason = " - " + reason;
+		mSystem.Say("Left #" + channel + reason, "error");
+	}
+
+	public void Joined(String channel, String username) {
+		mChannels.get(channel).Say(username + " has joined", "channel");
 	}
 
 	public void JoinFailed(String channel, String reason) {
-		mActive.Say(
-				"Could not join " + channel,
-				"error");
+		if (reason.length() > 0)
+			reason = " - " + reason;
+		mSystem.Say("Could not join #" + channel + reason, "error");
+	}
+
+	public void Leave(String channel) {
+		mTabs.remove(mChannels.remove(channel));
+		mSystem.Say("Left #" + channel, "system");
+	}
+
+	public void Left(String channel, String username, String reason) {
+		if (reason.length() > 0)
+			reason = " (" + reason + ")";
+		mChannels.get(channel).Say(username + " has left" + reason, "channel");
+	}
+
+	public void LinkHandler(ChatHandler ch) {
+		mChatHandler = ch;
+		mChatHandler.AttachChatWindow(this);
 	}
 
 	public void Motd(String msg) {
-//		mActive.Say(msg, "regular");
+		mSystem.Say(msg, "regular");
 	}
 
 	public void Said(String channel, String username, String msg) {
 		mChannels.get(channel).Say(
 				"<" + username + "> " + msg,
-				"regular");		
+				"regular");
 	}
 
 	public void SaidEx(String channel, String username, String msg) {
@@ -258,10 +239,50 @@ public class ChatWindow extends JPanel implements DraggableContent,
 	}
 
 	public void ServerMsg(String msg) {
-		mActive.Say(msg, "system");
+		mSystem.Say("**" + msg, "system");
 	}
 
-	public void Leave(String channel) {
-		mTabs.remove(mChannels.remove(channel));
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		if (e.getSource() == mTabs) {
+			mActive = (Channel) mTabs.getSelectedComponent();
+			if (mActive == mSystem)
+				mTabs.setTitleAt(mTabs.getSelectedIndex(), mActive.mName);
+			else
+				mTabs.setTitleAt(mTabs.getSelectedIndex(), "#" + mActive.mName);
+			mActive.add(mInput, BorderLayout.SOUTH);
+		}
+		mInput.requestFocus();
+	}
+
+	private void AddStyles(StyledDocument doc) {
+		Style def = StyleContext.getDefaultStyleContext().
+						getStyle(StyleContext.DEFAULT_STYLE);
+		
+        Style regular = doc.addStyle("regular", def);
+        StyleConstants.setFontFamily(def, "DejaVu Sans Mono");
+        StyleConstants.setFontSize(def, 11);
+        StyleConstants.setForeground(def, Color.BLACK);
+		
+        Style s = doc.addStyle("sayex", regular);
+        StyleConstants.setForeground(s, Color.PINK);
+        
+        s = doc.addStyle("time", regular);
+        StyleConstants.setBold(s, true);
+        StyleConstants.setForeground(s, Color.DARK_GRAY);
+        
+        s = doc.addStyle("error", regular);
+        StyleConstants.setForeground(s, Color.RED);
+
+        s = doc.addStyle("system", regular);
+        StyleConstants.setItalic(s, true);
+        StyleConstants.setForeground(s, Color.GRAY);
+        
+        s = doc.addStyle("channel", regular);
+        StyleConstants.setForeground(s, Color.GRAY);
+        
+        s = doc.addStyle("topic", regular);
+        StyleConstants.setItalic(s, true);
+        StyleConstants.setForeground(s, Color.BLUE);
 	}
 }
