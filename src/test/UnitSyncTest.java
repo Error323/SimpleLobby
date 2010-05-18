@@ -1,6 +1,7 @@
 package test;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import javax.imageio.ImageIO;
 import com.error323.lobby.UnitsyncLibrary;
 
 public class UnitSyncTest {
-	public static void main(String[] args) {
+	public UnitSyncTest() {
 		HashMap<String, String> maparchives = new HashMap<String, String>();
 		
 		UnitsyncLibrary.Init(false, 0);
@@ -29,37 +30,34 @@ public class UnitSyncTest {
 			} catch (NullPointerException npe) {
 				continue;
 			}
-//			System.out.println(name + " " + archivename + " " + hash + " " + unchainedhash);
 			try {
-				maparchives.put(name, archivename);
+				BufferedImage img = createImage(name);
+				try {
+				    // Save as PNG
+				    File file = new File("/home/fhuizing/www/SimpleLobby/"+hash+".png");
+				    ImageIO.write(img, "png", file);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			} catch (NullPointerException npe) {
 				
 			}
 		}
-		BufferedImage img = loadImage("SmallDivide.smf");
-		try {
-		    // Save as PNG
-		    File file = new File("/home/fhuizing/www/smalldivide.png");
-		    ImageIO.write(img, "png", file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	}
+
+
+	public static void main(String[] args) {
+		new UnitSyncTest();
 	}
 	
-	private static BufferedImage loadImage(String name) {
-		int miplevel = 0;
-		int width = 512 >> miplevel;
-		int height = 512 >> miplevel;
-		BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_USHORT_565_RGB);
-		
-		byte[] colors = UnitsyncLibrary.GetMinimap(name, miplevel).getByteArray(0, width*height*2);
-		int x = 0, y = 0;
-		for (int i = 0, n = width*height*2; i < n; i+=2) {
-			int color = 0xFFFF & (colors[i] << 8 | colors[i+1]);
-			x = (i/2) % (width-1);
-			bi.setRGB(x, y, color);
-			if (x == 0)	y++;
-		}
-		return bi;
+	private BufferedImage createImage(String name) {
+		int miplevel = 3;
+		int width = 1024 >> miplevel;
+		int height = 1024 >> miplevel;
+		short[] colours = UnitsyncLibrary.GetMinimap(name, miplevel).getShortArray(0, width*height);		
+		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_USHORT_565_RGB);
+		WritableRaster rast = img.getRaster();
+		rast.setDataElements(0, 0, width, height, colours);
+		return img;
 	}
 }
