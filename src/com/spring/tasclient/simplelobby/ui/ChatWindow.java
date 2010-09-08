@@ -34,26 +34,20 @@ import com.javadocking.dockable.DraggableContent;
 import com.javadocking.drag.DragListener;
 import com.spring.tasclient.simplelobby.ChatHandler;
 import com.spring.tasclient.simplelobby.ChatUserModel;
+import com.spring.tasclient.simplelobby.SimpleLobby;
 
 public class ChatWindow extends JPanel implements DraggableContent, 
 		ChangeListener, ActionListener {
-	private class Channel extends JComponent {
+	private class Channel extends Window {
 		private String mName;
-		private JTextPane mOutput;
-		private StyledDocument mDoc;
 		private JTable mUserTable;
 		
 		public Channel(String name, ChatUserModel model) {
 			setLayout(new BorderLayout());
 			mName = name;
-			
-			mOutput = new JTextPane();
 			mUserTable = new JTable();
 
 			mOutput.setEditable(false);
-			mOutput.setMargin(new Insets(3, 3, -4, 3));
-			mDoc = mOutput.getStyledDocument();
-			AddStyles(mDoc);
 			
 			mUserTable.setEnabled(false);
 			mUserTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -69,34 +63,14 @@ public class ChatWindow extends JPanel implements DraggableContent,
 	        JScrollPane jspLeft = new JScrollPane(mOutput);
 	        JScrollPane jspRight = new JScrollPane(mUserTable);
 	        	        
-	        JSplitPane jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jspLeft, jspRight);	        
+	        JSplitPane jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jspLeft, jspRight);
 	        add(jsp, BorderLayout.CENTER);
-	        jspLeft.setAutoscrolls(true);
-	        jspLeft.setMinimumSize(new Dimension(800, super.getHeight()));
-	        jspRight.setMinimumSize(new Dimension(150, super.getHeight()));
-	        jsp.setDividerLocation(jsp.getSize().width
-                    - jsp.getInsets().right
-                    - jsp.getDividerSize()
-                    - 200);
+	        jsp.setDividerLocation(SimpleLobby.WIDTH-200);
+	        jsp.setResizeWeight(0.8);
 		}
 		
+		@Override
 		public void Say(String msg, String style) {
-			/*
-			if (mActive != this) {
-				for (int i = 0; i < mTabs.getComponentCount(); i++) {
-					if (mTabs.getComponentAt(i) == this) {
-						if (msg.contains("Error323")) {
-							
-						}
-						if (this == mSystem)
-							mTabs.setTitleAt(i, "!" + mName);
-						else
-							mTabs.setBackgroundAt(i, Color.RED);
-					}
-				}
-			}
-			*/
-			
 			String lines[] = msg.split("\\\\n");
 			for (int i = 0; i < lines.length; i++) {
 				try {
@@ -135,6 +109,9 @@ public class ChatWindow extends JPanel implements DraggableContent,
 		
 		setLayout(new BorderLayout());
 		add(mTabs, BorderLayout.CENTER);
+		setSize(super.getSize());
+		setMinimumSize(super.getMinimumSize());
+		setPreferredSize(super.getPreferredSize());
 	}
 	
 	@Override
@@ -274,39 +251,5 @@ public class ChatWindow extends JPanel implements DraggableContent,
 			mActive.add(mInput, BorderLayout.SOUTH);
 		}
 		mInput.requestFocus();
-	}
-
-	private void AddStyles(StyledDocument doc) {
-		Style def = StyleContext.getDefaultStyleContext().
-						getStyle(StyleContext.DEFAULT_STYLE);
-		
-        Style regular = doc.addStyle("regular", def);
-        StyleConstants.setFontFamily(def, "DejaVu Sans Mono");
-        StyleConstants.setFontSize(def, 11);
-        StyleConstants.setForeground(def, Color.BLACK);
-		
-        Style s = doc.addStyle("sayex", regular);
-        StyleConstants.setForeground(s, Color.PINK);
-        
-        s = doc.addStyle("time", regular);
-        StyleConstants.setBold(s, true);
-        StyleConstants.setForeground(s, Color.DARK_GRAY);
-        
-        s = doc.addStyle("alert", regular);
-        StyleConstants.setForeground(s, Color.ORANGE);
-        
-        s = doc.addStyle("error", regular);
-        StyleConstants.setForeground(s, Color.RED);
-
-        s = doc.addStyle("system", regular);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, Color.GRAY);
-        
-        s = doc.addStyle("channel", regular);
-        StyleConstants.setForeground(s, Color.GRAY);
-        
-        s = doc.addStyle("topic", regular);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, Color.BLUE);
 	}
 }

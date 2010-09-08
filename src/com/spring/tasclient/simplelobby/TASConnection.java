@@ -131,64 +131,63 @@ public class TASConnection extends AConnection {
 	@Override
 	protected void Received(String data) {
 		System.out.println(data);
-		String splitted[] = data.split(" ");
-		String cmd = splitted[0];
+		String sentences[] = data.split("\t");
+		String words[] = sentences[0].split(" ");
+		String cmd = words[0];
 		
 		// User related commands
-		if (mUserHandlerListener != null) {
 		if (cmd.equals("CLIENTSTATUS")) {
-			mUserHandlerListener.ClientStatus(splitted[1], Integer.parseInt(splitted[2]));
+			mUserHandlerListener.ClientStatus(words[1], Integer.parseInt(words[2]));
 		} else
 		if (cmd.equals("CLIENTBATTLESTATUS")) {
-			mUserHandlerListener.ClientBattleStatus(splitted[1], Integer.parseInt(splitted[2]), Integer.parseInt(splitted[3]));
+			mUserHandlerListener.ClientBattleStatus(words[1], Integer.parseInt(words[2]), Integer.parseInt(words[3]));
 		} else
 		if (cmd.equals("ADDUSER")) {
-			mUserHandlerListener.AddUser(splitted[1], splitted[2], splitted[3]);
+			mUserHandlerListener.AddUser(words[1], words[2], words[3]);
 		} else
 		if (cmd.equals("REMOVEUSER")) {
-			mUserHandlerListener.RemoveUser(splitted[1]);
-		}
-		}
+			mUserHandlerListener.RemoveUser(words[1]);
+		} else
 			
 		// Chat related commands
 		if (cmd.equals("CLIENTS")) {
-			mChatListener.Clients(splitted[1], data.substring(GetStartIdx(splitted, 2)));
+			mChatListener.Clients(words[1], data.substring(GetStartIdx(words, 2)));
 		}
 		if (cmd.equals("SAID")) {
-			mChatListener.Said(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			mChatListener.Said(words[1], words[2], data.substring(GetStartIdx(words,3)));
 		} else
 		if (cmd.equals("SAIDPRIVATE")) {
-			mChatListener.SaidPrivate(splitted[1], splitted[2]);
+			mChatListener.SaidPrivate(words[1], words[2]);
 		} else
 		if (cmd.equals("SERVERMSG")) {
-			mChatListener.ServerMsg(splitted[1]);
+			mChatListener.ServerMsg(words[1]);
 		} else
 		if (cmd.equals("CHANNELMSG")) {
-			mChatListener.ChannelMsg(splitted[1], data.substring(GetStartIdx(splitted,2)));
+			mChatListener.ChannelMsg(words[1], data.substring(GetStartIdx(words,2)));
 		} else
 		if (cmd.equals("FORCELEAVECHANNEL")) {
-			mChatListener.ForceLeaveChannel(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			mChatListener.ForceLeaveChannel(words[1], words[2], data.substring(GetStartIdx(words,3)));
 		} else
 		if (cmd.equals("LEFT")) {
-			if (splitted.length == 4)
-				mChatListener.Left(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			if (words.length == 4)
+				mChatListener.Left(words[1], words[2], data.substring(GetStartIdx(words,3)));
 			else
-				mChatListener.Left(splitted[1], splitted[2], "");
+				mChatListener.Left(words[1], words[2], "");
 		} else
 		if (cmd.equals("JOINED")) {
-			mChatListener.Joined(splitted[1], splitted[2]);
+			mChatListener.Joined(words[1], words[2]);
 		} else
 		if (cmd.equals("JOIN")) {
-			mChatListener.JoinSucceeded(splitted[1]);
+			mChatListener.JoinSucceeded(words[1]);
 		} else
 		if (cmd.equals("JOINFAILED")) {
-			mChatListener.JoinFailed(splitted[1], data.substring(GetStartIdx(splitted, 2)));
+			mChatListener.JoinFailed(words[1], data.substring(GetStartIdx(words, 2)));
 		} else
 		if (cmd.equals("SAIDEX")) {
-			mChatListener.SaidEx(splitted[1], splitted[2], data.substring(GetStartIdx(splitted,3)));
+			mChatListener.SaidEx(words[1], words[2], data.substring(GetStartIdx(words,3)));
 		}
 		if (cmd.equals("CHANNELTOPIC")) {
-			mChatListener.ChannelTopic(splitted[1], splitted[2], splitted[3], data.substring(GetStartIdx(splitted,4)));
+			mChatListener.ChannelTopic(words[1], words[2], words[3], data.substring(GetStartIdx(words,4)));
 		} else
 		if (cmd.equals("MOTD")) {
 			if (data.length() == 4)
@@ -198,43 +197,60 @@ public class TASConnection extends AConnection {
 		} else
 		
 		// Battle related commands
-		if (mBattleListener != null) {
 		if (cmd.equals("BATTLEOPENED")) {
-			mBattleListener.BattleOpened(splitted[1], splitted[2], splitted[3], splitted[4], splitted[5], splitted[6], splitted[7], splitted[8], splitted[9], splitted[10], splitted[11], splitted[12], splitted[13]);
+			switch (sentences.length) {
+			case 1: mBattleListener.BattleOpened(words[1], words[2], words[3], 
+					words[4], words[5], words[6], words[7], words[8], words[9], 
+					words[10], "", "", ""); 
+			break;
+			case 2: mBattleListener.BattleOpened(words[1], words[2], words[3], 
+					words[4], words[5], words[6], words[7], words[8], words[9], 
+					words[10], sentences[1], "", ""); 
+			break;
+			case 3: mBattleListener.BattleOpened(words[1], words[2], words[3], 
+					words[4], words[5], words[6], words[7], words[8], words[9], 
+					words[10], sentences[1], sentences[2], ""); 
+			break;
+			default: mBattleListener.BattleOpened(words[1], words[2], words[3], 
+					words[4], words[5], words[6], words[7], words[8], words[9], 
+					words[10], sentences[1], sentences[2], sentences[3]);
+			}
 		} else
 		if (cmd.equals("BATTLECLOSED")) {
-			mBattleListener.BattleClosed(splitted[1]);
+			mBattleListener.BattleClosed(words[1]);
 		} else
 		if (cmd.equals("JOINBATTLE")) {
-			mBattleListener.JoinBattle(splitted[1]);
+			mBattleListener.JoinBattle(words[1]);
 		} else
 		if (cmd.equals("JOINBATTLEFAILED")) {
-			mBattleListener.JoinBattleFailed(data.substring(GetStartIdx(splitted, 0)));
+			mBattleListener.JoinBattleFailed(data.substring(GetStartIdx(words, 0)));
 		} else
 		if (cmd.equals("JOINEDBATTLE")) {
-			mBattleListener.JoinedBattle(splitted[1], splitted[2]);
+			mBattleListener.JoinedBattle(words[1], words[2]);
 		} else
 		if (cmd.equals("LEFTBATTLE")) {
-			mBattleListener.LeftBattle(splitted[1], splitted[2]);
+			mBattleListener.LeftBattle(words[1], words[2]);
 		} else
 		if (cmd.equals("UPDATEBATTLEINFO")) {
-			mBattleListener.UpdateBattleInfo(splitted[1], splitted[2], splitted[3], splitted[4], splitted[5]);
-		}
-		}
+			mBattleListener.UpdateBattleInfo(words[1], words[2], words[3], 
+					words[4], words[5]);
+		} else
 		
-		if (mConnListener == null) {
 		// Connection related commands
 		if (cmd.equals("TASServer")) {
-			mConnListener.Connected(splitted[1], splitted[2], splitted[3], splitted[4]);
+			mConnListener.Connected(words[1], words[2], words[3], words[4]);
 		} else
 		if (cmd.equals("ACCEPTED")) {
-			mConnListener.LoginSucceeded(splitted[1]);
+			mConnListener.LoginSucceeded(words[1]);
 		} else
 		if (cmd.equals("DENIED")) {
-			mConnListener.LoginFailed(data.substring(GetStartIdx(splitted, 1)));
+			mConnListener.LoginFailed(data.substring(GetStartIdx(words, 1)));
 		} else
 		if (cmd.equals("SERVERMSGBOX")) {
-			mConnListener.ServerMsgBox(data.substring(GetStartIdx(splitted, 1)), "");
+			switch (sentences.length) {
+				case 1: mConnListener.ServerMsgBox(words[1], "");
+				default: mConnListener.ServerMsgBox(words[1], sentences[1]);
+			}
 		} else
 		if (cmd.equals("PONG")) {
 			mPongReceived = true;
@@ -242,17 +258,16 @@ public class TASConnection extends AConnection {
 			mConnListener.Pong(mPingTime);
 		} else
 		if (cmd.equals("AGREEMENT")) {
-			mConnListener.Agreement(data.substring(GetStartIdx(splitted, 1)));
+			mConnListener.Agreement(data.substring(GetStartIdx(words, 1)));
 		} else
 		if (cmd.equals("AGREEMENTEND")) {
 			mConnListener.AgreementEnd();
 		} else
 		if (cmd.equals("REGISTRATIONDENIED")) {
-			mConnListener.RegistrationDenied(data.substring(GetStartIdx(splitted, 1)));
+			mConnListener.RegistrationDenied(data.substring(GetStartIdx(words, 1)));
 		} else
 		if (cmd.equals("REGISTRATIONACCEPTED")) {
 			mConnListener.RegistrationAccepted();
-		}
 		}
 	}
 

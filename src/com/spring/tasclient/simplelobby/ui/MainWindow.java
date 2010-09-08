@@ -47,6 +47,9 @@ public class MainWindow extends JPanel {
 		add(splitDock, BorderLayout.CENTER);
 		add(mStatusLabel, BorderLayout.SOUTH);
 		SetStatus("Disconnected");
+		setSize(super.getSize());
+		setMinimumSize(super.getMinimumSize());
+		setPreferredSize(super.getPreferredSize());
 	}
 	
 	public void AddDockable(String name, JComponent component) {

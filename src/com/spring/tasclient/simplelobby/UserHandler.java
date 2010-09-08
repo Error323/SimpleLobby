@@ -121,6 +121,7 @@ public class UserHandler implements IUserHandlerListener {
 			}
 			
 			// Alert the interfaces when states changed
+			if (mBattleUserListener == null) return;
 			if (mReady != ready) {
 				mReady = ready;
 				mBattleUserListener.Ready(mName, ready);
@@ -159,6 +160,7 @@ public class UserHandler implements IUserHandlerListener {
 		 * @param color
 		 */
 		public void SetColor(int color) {
+			if (mBattleUserListener == null) return;
 			if (mColor != color) {
 				mColor = color;
 				mBattleUserListener.Color(mName, color);
@@ -186,12 +188,12 @@ public class UserHandler implements IUserHandlerListener {
 			
 			Rank rank = Rank.Newbie;
 			switch ((status >> 2) & 7) {
-				case 1:  rank = Rank.Beginner; break;
-				case 2:  rank = Rank.Average; break;
-				case 3:  rank = Rank.AboveAverage;break;
-				case 4:  rank = Rank.Experienced; break;
+				case 1:  rank = Rank.Beginner;          break;
+				case 2:  rank = Rank.Average;           break;
+				case 3:  rank = Rank.AboveAverage;      break;
+				case 4:  rank = Rank.Experienced;       break;
 				case 5:  rank = Rank.HighlyExperienced; break;
-				case 6:  rank = Rank.Veteran; break;
+				case 6:  rank = Rank.Veteran;           break;
 			}
 			
 			// Alert the interfaces when states changed
@@ -252,7 +254,7 @@ public class UserHandler implements IUserHandlerListener {
 			user = new User(username, country, cpu);
 		}
 		else {
-			user = mFreeUsers.removeFirst();
+			user = mFreeUsers.removeLast();
 			user.Reset(username, country, cpu);
 		}
 		mUsers.put(username, user);

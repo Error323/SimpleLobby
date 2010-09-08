@@ -15,8 +15,11 @@ import unitsync.UnitsyncLibrary;
 
 /**
  * The unitsync lib is compiled with:
- * java -jar jnaerator-0.9.3.jar -library unitsync -scanSymbols -nocpp -noLibBundle -direct -preferJavac unitsync.h unitsync_api.h
- * note that 
+ * java -jar jnaerator-0.9.3.jar -library unitsync -scanSymbols -nocpp \
+ * 	-noLibBundle -direct -preferJavac unitsync.h unitsync_api.h
+ * 
+ * Note that during compilation, "System/exportdefines.h" in unitsync_api.h,
+ * should be changed to "../../rts/System/exportdefines.h"
  * @author fhuizing
  *
  */
